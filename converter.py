@@ -43,6 +43,9 @@ def get_ndetectors(h5file):
 def add_larch_attributes(h5file):    
     NDETECTORS = get_ndetectors(h5file)
     xrfmap = h5file['xrfmap']
+
+    xrfmap.attrs.create(name='Process_Machine',data=None,shape=None,dtype=h5py.special_dtype(vlen=str))
+    xrfmap.attrs.create(name='Process_ID',data=0,shape=None,dtype='i')
     
     for detector in range(1,NDETECTORS+1):
         det = h5file['xrfmap/det%i' %(detector)]
