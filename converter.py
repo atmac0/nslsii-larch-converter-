@@ -275,19 +275,18 @@ def create_detn_datasets(h5file):
         dtfactor[:,:] = 1
         livetime[:,:] = 1
         realtime[:,:] = 1
-        for energyValue in range (0, 4096):
+        for energyValue in range (0, ):
             energy[energyValue] = energyValue/100.0
 
-def create_detsum_energy(h5file):
+def create_detsum_energy(h5file,channelWidth):
     counts = h5file['xrfmap/detsum/counts']
     try:
         energy = h5file.create_dataset("xrfmap/detsum/energy", shape=(counts.shape[2],),dtype='f')
     except RuntimeError:
         del h5file["xrfmap/detsum/energy"]
         energy = h5file.create_dataset("xrfmap/detsum/energy", shape=(counts.shape[2],),dtype='f')
-    
-    for energyValue in range (0, 4096):
-        energy[energyValue] = energyValue/100.0
+    for energyValue in range (0, counts.shape[2]):
+        energy[energyValue] = energyValue/(channelWidth*10.0)
 
     energy.attrs.create(name = 'cal_offset', data = 0, shape = None, dtype = 'f')
 
@@ -295,6 +294,7 @@ def create_detsum_energy(h5file):
 
 def main():
 
+    ##When adding an element, you must add both the element name to sum_name_data and the energy bounds to sum_limit_data at the corresponding index.
     sum_name_data = np.array([["OutputCounts"],
                              ["Si Ka"],
                              ["P Ka"],
@@ -353,6 +353,9 @@ def main():
                            [1527,1628],
                            [1684,1787]])
 
+
+    #The width of each channel in eV's
+    channelWidth = 10
     
     files = sys.argv[1:]
     if(files==[]):
@@ -364,6 +367,8 @@ def main():
         print('The NSLSII to Larch converter scripts expects a filepath or filepaths from the command line aruments. You must give the filepath relative to the current working directory. To call multiple files, simply provide multiple paths to each file. If you want to convert all files in a directory, use *.h5 as your filename.')
         exit(1)
 
+
+    ##IMPORTANT NOTE: If the channel widths of the detector are not 10eV wide you must change the channelWidth variable to the correct channel width. The energy ranges in sum_limit_data then also must not be equivalent to the energy bounds, but the indices of the counts array which you wish to integrate.
     ##Check if all filepaths are valid
     for filename in files:
         try:
@@ -395,7 +400,7 @@ def main():
         create_area(h5file)
         create_positions_datasets(h5file)
         create_detn_datasets(h5file)
-        create_detsum_energy(h5file)
+        create_detsum_energy(h5file, channelWidth)
 
         add_larch_datasets(h5file)
         add_larch_attributes(h5file) 
